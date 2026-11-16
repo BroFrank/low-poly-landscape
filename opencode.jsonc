@@ -1,0 +1,32 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  // Правила и роли агентов описаны в AGENTS.md, порядок работ — в Plan.md.
+  "instructions": ["AGENTS.md", "Plan.md"],
+  "agents": {
+    "orchestrator": {
+      "description": "Оркестратор цикла разработки: берёт первую незакрытую задачу из Plan.md",
+      "mode": "primary"
+    },
+    "planner": {
+      "description": "Готовит подробный технический план задачи (не редактирует код)",
+      "mode": "subagent"
+    },
+    "implementer": {
+      "description": "Пишет код строго по плану (не делает коммиты и не трогает Plan.md)",
+      "mode": "subagent"
+    },
+    "reviewer": {
+      "description": "Самопроверка диффа перед ручной проверкой юзером",
+      "mode": "subagent"
+    }
+  },
+  "permissions": [
+    { "action": "shell", "resource": "git push *", "effect": "ask" },
+    { "action": "shell", "resource": "git commit *", "effect": "ask" },
+    { "action": "shell", "resource": "npm run *", "effect": "allow" },
+    { "action": "shell", "resource": "npm install *", "effect": "ask" }
+  ],
+  "watcher": {
+    "ignore": ["node_modules/**", "dist/**"]
+  }
+}
