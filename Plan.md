@@ -13,7 +13,7 @@
 
 ## Этап 0. Фундамент проекта
 
-### - [ ] **T001 — Каркас проекта**
+### - [x] **T001 — Каркас проекта**
 - Создать `package.json` (`three`, `typescript`, `vite`, `@types/three`), `tsconfig.json` (strict), `index.html`, `src/main.ts`.
 - Скрипты: `dev`, `build`, `preview`.
 - `.gitignore` (`node_modules`, `dist`, `.opencode/state`).
