@@ -1,0 +1,112 @@
+/* T003: оверлей UI над сценой. Палитра фиксирована (AGENTS.md, раздел 6). */
+
+/* Обёртка не ловит клики: пустые области пропускают их к canvas, OrbitControls не блокируется. */
+#ui {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Панель инструментов: верх слева. flex-wrap спасает при узком окне.
+   Обёртка панели не ловит клики: паддинги и разделитель не должны перехватывать drag камеры,
+   интерактивны только сами кнопки. */
+#toolbar {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  max-width: min(620px, calc(100vw - 24px));
+  pointer-events: none;
+  background: rgba(27, 42, 58, 0.85);
+  border: 1px solid rgba(143, 154, 163, 0.35);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font: 13px/1.4 system-ui, sans-serif;
+  color: #cfe3f2;
+}
+
+#toolbar button {
+  pointer-events: auto;
+  background: transparent;
+  border: 1px solid rgba(143, 154, 163, 0.45);
+  color: #cfe3f2;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+#toolbar button:hover {
+  border-color: #8f9aa3;
+}
+
+/* Активный инструмент подсвечивается цветом своего покрытия (--tool-color задаётся из JS). */
+#toolbar button.is-active {
+  background: var(--tool-color, #8f9aa3);
+  color: #1b2a3a;
+  border-color: transparent;
+}
+
+/* Разделитель между группами «инструменты» и «действия/освещение». */
+#toolbar .toolbar-sep {
+  width: 1px;
+  height: 18px;
+  background: rgba(143, 154, 163, 0.35);
+}
+
+/* Строка статуса и справка: низ слева.
+   В T003 HUD не содержит интерактивных элементов, поэтому pointer-events: none —
+   клики и drag камеры проходят сквозь неё. `auto` вернётся, когда в HUD появятся
+   кнопки (T014 удаление выделенного, T018 сохранение). */
+#hud {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  pointer-events: none;
+  background: rgba(27, 42, 58, 0.8);
+  border: 1px solid rgba(143, 154, 163, 0.3);
+  border-radius: 10px;
+  padding: 8px 12px;
+  color: #cfe3f2;
+  font: 12px/1.4 system-ui, sans-serif;
+  max-width: min(420px, calc(100vw - 24px));
+}
+
+#hud .hud-action {
+  margin-top: 4px;
+  color: #8f9aa3;
+}
+
+#hud .hud-keys {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  color: #8f9aa3;
+}
+
+/* Широкие окна не требуют изменений, узкие — прижимают панели к краям. */
+@media (max-width: 900px) {
+  #toolbar {
+    left: 8px;
+    right: 8px;
+    top: 8px;
+    max-width: none;
+  }
+}
+
+@media (max-width: 560px) {
+  #hud {
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    max-width: none;
+  }
+
+  /* Справка нечитабельна на мобильной ширине — прячем её, статус остаётся. */
+  #hud .hud-keys {
+    display: none;
+  }
+}

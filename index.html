@@ -6,6 +6,7 @@
     <title>Low Poly Landscape</title>
     <!-- Пустой favicon, чтобы браузер не делал запрос /favicon.ico (404 в консоли) -->
     <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/src/ui/ui.css" />
     <style>
       html,
       body {
@@ -23,6 +24,13 @@
   </head>
   <body>
     <canvas id="scene" aria-label="Сцена ландшафта"></canvas>
+
+    <!-- Оверлей UI: панели поверх сцены, клики по пустым областям проходят к canvas (см. ui.css) -->
+    <div id="ui">
+      <div id="toolbar"></div>
+      <div id="hud"></div>
+    </div>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

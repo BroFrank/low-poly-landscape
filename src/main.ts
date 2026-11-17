@@ -3,12 +3,34 @@
 import * as THREE from 'three';
 import { createScene, type SceneContext } from './core/scene.js';
 import { updateCameraMovement } from './core/camera.js';
+import { createUiState } from './core/state.js';
+import { createToolbar } from './ui/toolbar.js';
+import { createHud } from './ui/hud.js';
 
 const canvas = document.getElementById('scene');
 
 if (!(canvas instanceof HTMLCanvasElement)) {
   throw new Error('Не найден элемент canvas#scene');
 }
+
+const toolbarRoot = document.getElementById('toolbar');
+const hudRoot = document.getElementById('hud');
+if (!(toolbarRoot instanceof HTMLElement) || !(hudRoot instanceof HTMLElement)) {
+  throw new Error('Не найдены контейнеры UI (#toolbar, #hud)');
+}
+
+/**
+ * UI создаётся до сборки сцены: панели — оверлей, они не зависят от ctx.
+ * Заглушки handlers подключаются в T004/T005/T008–T011; возвращаемые handles
+ * (dispose) будут задействованы, когда появится точка teardown приложения.
+ */
+const ui = createUiState();
+createHud(hudRoot, ui);
+createToolbar(toolbarRoot, ui, {
+  onTool: (): void => {},
+  onAction: (): void => {},
+  onLight: (): void => {},
+});
 
 /** Временная тестовая площадка (T002): будет заменена моделью рельефа в T007. */
 function createTestGround(scene: THREE.Scene): void {
