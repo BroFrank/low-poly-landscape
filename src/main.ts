@@ -1,11 +1,12 @@
-/** T002/T004: сборка ядра сцены, тестовая площадка, цикл кадра и действия UI. */
+/** T002/T004/T005: сборка ядра сцены, тестовая площадка, цикл кадра и действия UI. */
 
 import * as THREE from 'three';
 import { createScene, type SceneContext } from './core/scene.js';
 import { updateCameraMovement } from './core/camera.js';
+import { createLighting, type LightingHandle } from './core/lighting.js';
 import { createUiState } from './core/state.js';
 import { captureScreenshot } from './core/screenshot.js';
-import type { ActionId } from './core/state.js';
+import type { ActionId, LightMode } from './core/state.js';
 import { createToolbar } from './ui/toolbar.js';
 import { createHud } from './ui/hud.js';
 
@@ -23,12 +24,14 @@ if (!(toolbarRoot instanceof HTMLElement) || !(hudRoot instanceof HTMLElement)) 
 
 /** Временная тестовая площадка (T002): будет заменена моделью рельефа в T007. */
 function createTestGround(scene: THREE.Scene): void {
-  // Освещения ещё нет (T005), поэтому BasicMaterial — плоский цвет без теней.
+  // Lambert — площадка должна реагировать на свет солнца (T005) и принимать тени.
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(100, 100),
-    new THREE.MeshBasicMaterial({ color: 0x4f9e57 }),
+    new THREE.MeshLambertMaterial({ color: 0x4f9e57, flatShading: true }),
   );
   ground.rotation.x = -Math.PI / 2;
+  // Плоскость только принимает тени: отбрасывать ей нечего, а теневая карта дороже.
+  ground.receiveShadow = true;
 
   // Сетка-подложка: 64 деления на стороне совпадает с GRID_SIZE из T007.
   const grid = new THREE.GridHelper(100, 64, 0x63b56b, 0x63b56b);
@@ -37,12 +40,14 @@ function createTestGround(scene: THREE.Scene): void {
   scene.add(ground, grid);
 }
 
-function run(ctx: SceneContext): void {
+function run(ctx: SceneContext, lighting: LightingHandle): void {
   ctx.resize(); // первый пересчёт размера и aspect до первого render
 
   // Цикл кадра и таймер принадлежат scene.ts — dispose() их гарантированно останавливает.
   ctx.start((dt: number): void => {
     updateCameraMovement(ctx, dt);
+    // Освещение обновляется в этом же цикле: своего requestAnimationFrame у lighting.ts нет.
+    lighting.update(dt);
     ctx.controls.update();
     ctx.renderer.render(ctx.scene, ctx.camera);
   });
@@ -51,11 +56,14 @@ function run(ctx: SceneContext): void {
 /**
  * Сцена собирается раньше UI: обработчики действий должны иметь доступ к ctx.
  * Панели — DOM-оверлей, на порядок создания рендерера они не влияют.
- * Заглушки handlers подключаются в T005/T008–T011; возвращаемые handles
- * (dispose) будут задействованы, когда появится точка teardown приложения.
+ * Освещение (T005) подключено, заглушки handlers — onTool/onAction('reset')
+ * в T008–T011; возвращаемые handles (dispose) будут задействованы, когда появится
+ * точка teardown приложения.
  */
 const ctx = createScene(canvas);
 createTestGround(ctx.scene);
+// Точка teardown приложения пока отсутствует: lighting.dispose() подключится, когда он появится.
+const lighting = createLighting(ctx, { cycleSeconds: 60 });
 
 const ui = createUiState();
 createHud(hudRoot, ui);
@@ -70,7 +78,9 @@ createToolbar(toolbarRoot, ui, {
         : `Скриншот не создан: ${result.message}`,
     });
   },
-  onLight: (): void => {},
+  onLight: (mode: LightMode): void => {
+    lighting.setMode(mode);
+  },
 });
 
-run(ctx);
+run(ctx, lighting);

@@ -39,6 +39,9 @@ const LIGHT_LABEL: Record<LightMode, string> = {
   auto: 'Авто',
 };
 
+/** Кнопка освещения циклична: день → ночь → авто → день. */
+const LIGHT_CYCLE: Record<LightMode, LightMode> = { day: 'night', night: 'auto', auto: 'day' };
+
 /** Построить панель кнопок. Единственная точка обновления — ui.subscribe(render). */
 export function createToolbar(
   root: HTMLElement,
@@ -121,8 +124,7 @@ export function createToolbar(
   });
 
   lightButton.addEventListener('click', () => {
-    // 'auto' появится в T005; сейчас цикл — день ⇄ ночь.
-    const next: LightMode = ui.get().lightMode === 'day' ? 'night' : 'day';
+    const next = LIGHT_CYCLE[ui.get().lightMode];
     ui.set({ lightMode: next, lastAction: `Освещение: ${LIGHT_LABEL[next]}` });
     handlers.onLight(next);
   });
