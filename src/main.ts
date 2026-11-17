@@ -1,9 +1,11 @@
-/** T002: сборка ядра сцены, тестовая площадка и цикл кадра. */
+/** T002/T004: сборка ядра сцены, тестовая площадка, цикл кадра и действия UI. */
 
 import * as THREE from 'three';
 import { createScene, type SceneContext } from './core/scene.js';
 import { updateCameraMovement } from './core/camera.js';
 import { createUiState } from './core/state.js';
+import { captureScreenshot } from './core/screenshot.js';
+import type { ActionId } from './core/state.js';
 import { createToolbar } from './ui/toolbar.js';
 import { createHud } from './ui/hud.js';
 
@@ -18,19 +20,6 @@ const hudRoot = document.getElementById('hud');
 if (!(toolbarRoot instanceof HTMLElement) || !(hudRoot instanceof HTMLElement)) {
   throw new Error('Не найдены контейнеры UI (#toolbar, #hud)');
 }
-
-/**
- * UI создаётся до сборки сцены: панели — оверлей, они не зависят от ctx.
- * Заглушки handlers подключаются в T004/T005/T008–T011; возвращаемые handles
- * (dispose) будут задействованы, когда появится точка teardown приложения.
- */
-const ui = createUiState();
-createHud(hudRoot, ui);
-createToolbar(toolbarRoot, ui, {
-  onTool: (): void => {},
-  onAction: (): void => {},
-  onLight: (): void => {},
-});
 
 /** Временная тестовая площадка (T002): будет заменена моделью рельефа в T007. */
 function createTestGround(scene: THREE.Scene): void {
@@ -59,6 +48,29 @@ function run(ctx: SceneContext): void {
   });
 }
 
+/**
+ * Сцена собирается раньше UI: обработчики действий должны иметь доступ к ctx.
+ * Панели — DOM-оверлей, на порядок создания рендерера они не влияют.
+ * Заглушки handlers подключаются в T005/T008–T011; возвращаемые handles
+ * (dispose) будут задействованы, когда появится точка teardown приложения.
+ */
 const ctx = createScene(canvas);
 createTestGround(ctx.scene);
+
+const ui = createUiState();
+createHud(hudRoot, ui);
+createToolbar(toolbarRoot, ui, {
+  onTool: (): void => {},
+  onAction: (action: ActionId): void => {
+    if (action !== 'screenshot') return; // 'reset' — задача T011
+    const result = captureScreenshot(ctx);
+    ui.set({
+      lastAction: result.ok
+        ? `Скриншот: ${result.fileName} (${result.width}×${result.height})`
+        : `Скриншот не создан: ${result.message}`,
+    });
+  },
+  onLight: (): void => {},
+});
+
 run(ctx);
